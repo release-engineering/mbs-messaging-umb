@@ -1,0 +1,6 @@
+global-exclude *.pyc *.pyo
+include LICENSE
+include README.rst
+include requirements.txt
+include test-requirements.txt
+recursive-include conf config.py
