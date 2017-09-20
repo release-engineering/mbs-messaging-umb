@@ -21,6 +21,7 @@
 # Written by Mike Bonnet <mikeb@redhat.com>
 
 
+import json
 import os
 import unittest
 from mock import patch
@@ -85,8 +86,29 @@ class TestPublisher(unittest.TestCase):
         self.assertEqual(len(kws), 2)
         headers = kws['headers']
         self.assertEqual(headers['content-type'], 'text/json')
-        self.assertEqual(headers['content-length'], 4)
+        self.assertEqual(headers['content-length'], len(json.dumps('test')))
         self.assertEqual(headers['destination'], '/topic/foo.module.state.change')
+
+    @patch('mbs_messaging_umb.publisher.load_config')
+    @patch('mbs_messaging_umb.publisher.stomp.Connection')
+    @patch('mbs_messaging_umb.publisher.fedmsg.config')
+    def test_publish_json(self, fm_conf, Conn, load_conf):
+        fm_conf.load_config.return_value = {
+            'stomp_uri': 'foo:1234',
+            'stomp_ssl_crt': '/tmp/crt',
+            'stomp_ssl_key': '/tmp/key',
+        }
+        load_conf.return_value.dest_prefix = '/topic/foo'
+        msg = {'foo': 1, 'bar': 'baz'}
+        self.pub.publish('module.state.change', msg, None, 'mbs')
+        conn = Conn.return_value
+        self.assertEqual(conn.send.call_count, 1)
+        args, kws = conn.send.call_args
+        self.assertEqual(len(kws), 2)
+        self.assertIn('message', kws)
+        sent_msg = kws['message']
+        self.assertIsInstance(sent_msg, str)
+        self.assertEqual(msg, json.loads(sent_msg))
 
     @patch('mbs_messaging_umb.publisher.load_config')
     @patch('mbs_messaging_umb.publisher.stomp.Connection')
@@ -108,7 +130,7 @@ class TestPublisher(unittest.TestCase):
         self.assertEqual(len(kws), 2)
         headers = kws['headers']
         self.assertEqual(headers['content-type'], 'text/json')
-        self.assertEqual(headers['content-length'], 4)
+        self.assertEqual(headers['content-length'], len(json.dumps('test')))
         self.assertEqual(headers['destination'], '/topic/foo.module.state.change')
 
         # send another message to use the cached publisher
@@ -118,5 +140,5 @@ class TestPublisher(unittest.TestCase):
         self.assertEqual(len(kws), 2)
         headers = kws['headers']
         self.assertEqual(headers['content-type'], 'text/json')
-        self.assertEqual(headers['content-length'], 5)
+        self.assertEqual(headers['content-length'], len(json.dumps('test2')))
         self.assertEqual(headers['destination'], '/topic/foo.module.state.change2')
