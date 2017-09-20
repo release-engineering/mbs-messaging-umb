@@ -1,0 +1,18 @@
+language: python
+addons:
+  apt:
+    packages:
+      - swig
+python:
+ - "2.7"
+env:
+  - TOXENV=py27
+  - TOXENV=flake8
+  - TOXENV=bandit
+  - TOXENV=coverage
+install: pip install tox-travis codecov
+script: tox
+after_success: >
+  [ -f $TRAVIS_BUILD_DIR/.coverage ] &&
+  coverage xml -o $TRAVIS_BUILD_DIR/coverage.xml &&
+  codecov -e TRAVIS_PYTHON_VERSION --file $TRAVIS_BUILD_DIR/coverage.xml || :
