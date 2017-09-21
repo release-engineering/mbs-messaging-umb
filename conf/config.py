@@ -15,7 +15,6 @@ message_mapping = {
         'build_name': 'body.info.name',
         'build_version': 'body.info.version',
         'build_release': 'body.info.release',
-        'module_build_id': 'body.info.id',
     },
     'KojiTagChange': {
         'matches': ['/topic/VirtualTopic.eng.brew.build.tag'],
