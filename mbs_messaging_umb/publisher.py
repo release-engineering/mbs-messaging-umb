@@ -22,6 +22,7 @@
 # Written by Mike Bonnet <mikeb@redhat.com>
 
 
+import json
 import logging
 import ssl
 import uuid
@@ -77,6 +78,7 @@ class StompPublisher(object):
         conn.connect(wait=True)
         self.log.debug('Connected to %s', conn.get_host_and_port())
         dest = '.'.join([load_config().dest_prefix, topic])
+        msg = json.dumps(msg)
         headers = {
             'destination': dest,
             'content-type': 'text/json',

@@ -8,7 +8,7 @@ with open('test-requirements.txt') as f:
 
 setup(
     name='mbs-messaging-umb',
-    description='A plugin for the Module Build System to support sending '
+    description='A plugin for the Module Build Service to support sending '
     'and receiving messages from the Unified Message Bus',
     version='0.0.1',
     classifiers=[

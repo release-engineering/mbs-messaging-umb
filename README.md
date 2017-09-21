@@ -1,7 +1,7 @@
 mbs-messaging-umb
 ==================
 
-A plugin for the Module Build System to support sending and receiving messages from the Unified Message Bus
+A plugin for the Module Build Service to support sending and receiving messages from the Unified Message Bus
 -----------------------------------------------------
 
 The [Module Build Service](https://pagure.io/fm-orchestrator/) is a system
