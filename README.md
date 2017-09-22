@@ -10,8 +10,8 @@ which can be treated as discrete units for testing and deployment.
 
 The MBS was originally built to work with [fedmsg](http://fedmsg.com).
 However, it has a pluggable system for message parsing and publising. This
-package provides a plugin which that enables fully config-driven message
-parsing, and publishing using STOMP.
+package provides a plugin that enables fully config-driven message parsing,
+and publishing using STOMP.
 
 Build Status
 ------------
