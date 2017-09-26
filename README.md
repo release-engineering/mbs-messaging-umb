@@ -20,10 +20,10 @@ Build Status
   | ------ | ------------------------------ | ------------------------ |
   | master | [![][travisbadge]][travislink] | [![][covbadge]][covlink] |
 
-  [travisbadge]: https://secure.travis-ci.org/mikebonnet/mbs-messaging-umb.png?branch=master "Travis CI build status"
-  [travislink]: https://travis-ci.org/mikebonnet/mbs-messaging-umb "Travis CI for mbs-messaging-umb"
-  [covbadge]: https://codecov.io/gh/mikebonnet/mbs-messaging-umb/branch/master/graph/badge.svg "codecov.io status"
-  [covlink]: https://codecov.io/gh/mikebonnet/mbs-messaging-umb "codecov.io for mbs-messaging-umb"
+  [travisbadge]: https://secure.travis-ci.org/release-engineering/mbs-messaging-umb.png?branch=master "Travis CI build status"
+  [travislink]: https://travis-ci.org/release-engineering/mbs-messaging-umb "Travis CI for mbs-messaging-umb"
+  [covbadge]: https://codecov.io/gh/release-engineering/mbs-messaging-umb/branch/master/graph/badge.svg "codecov.io status"
+  [covlink]: https://codecov.io/gh/release-engineering/mbs-messaging-umb "codecov.io for mbs-messaging-umb"
 
 Running the Tests
 -----------------
