@@ -95,7 +95,7 @@ class CustomParser(object):
                 continue
             try:
                 return msg_cls(**attrs)
-            except:
+            except Exception:
                 accepted_args = inspect.getargspec(msg_cls.__init__).args
                 # Remove 'self' from the accepted arguments
                 accepted_args.pop(0)
