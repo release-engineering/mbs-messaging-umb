@@ -39,6 +39,6 @@ def load_config():
         conffile = os.environ.get('MBS_MESSAGING_UMB_CONFIG', CONFFILE)
         try:
             _CONF_MODULE = imp.load_source('mbs_messaging_umb_config', conffile)
-        except:
+        except Exception:
             log.exception('Could not load config file: {0}'.format(conffile))
     return _CONF_MODULE
