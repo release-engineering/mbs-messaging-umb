@@ -22,6 +22,7 @@
 # Written by Mike Bonnet <mikeb@redhat.com>
 
 import logging
+import inspect
 import fnmatch
 import jsonpath_rw
 from conf import load_config
@@ -95,9 +96,15 @@ class CustomParser(object):
             try:
                 return msg_cls(**attrs)
             except:
+                accepted_args = inspect.getargspec(msg_cls.__init__).args
+                # Remove 'self' from the accepted arguments
+                accepted_args.pop(0)
+                error = ('Error constructing {0}. The args of the constructor '
+                         'are: {1}. The args passed in were (not in order): {2}'
+                         .format(cls_name, ', '.join(accepted_args),
+                                 ', '.join(attrs.keys())))
                 # incorrect number of parameters passed to the constructor, probably
-                self.log.exception('Error constructing %s, is the number of '
-                                   'parameters correct?', cls_name)
+                self.log.exception(error)
                 continue
 
         # nothing worked
