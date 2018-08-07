@@ -22,7 +22,6 @@ message_mapping = {
         'msg_id': 'headers.message-id',
         'tag': 'body.tag.name',
         'artifact': 'body.build.name',
-        'build_id': 'body.build.build_id',
     },
     'KojiRepoChange': {
         'matches': ['/topic/VirtualTopic.eng.brew.repo.done'],
