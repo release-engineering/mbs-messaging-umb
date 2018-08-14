@@ -95,6 +95,9 @@ class CustomParser(object):
                 continue
             try:
                 return msg_cls(**attrs)
+            except module_build_service.messaging.IgnoreMessage as e:
+                # These are harmless
+                self.log.debug(e)
             except Exception:
                 accepted_args = inspect.getargspec(msg_cls.__init__).args
                 # Remove 'self' from the accepted arguments
