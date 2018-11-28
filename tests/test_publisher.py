@@ -23,7 +23,7 @@
 
 import json
 import os
-from mock import patch
+from mock import patch, PropertyMock
 
 import pytest
 
@@ -68,80 +68,121 @@ class TestPublisher(object):
         assert conf is None
         log.exception.assert_called_once_with('Could not load config file: /foo')
 
+    @pytest.mark.parametrize('legacy_stomp', [True, False])
     @patch('mbs_messaging_umb.publisher.load_config')
-    @patch('mbs_messaging_umb.publisher.stomp.Connection')
     @patch('mbs_messaging_umb.publisher.fedmsg.config')
-    def test_publish(self, fm_conf, Conn, load_conf):
+    def test_publish(self, fm_conf, load_conf, legacy_stomp):
         fm_conf.load_config.return_value = {
             'stomp_uri': 'foo:1234',
             'stomp_ssl_crt': '/tmp/crt',
             'stomp_ssl_key': '/tmp/key',
         }
         load_conf.return_value.dest_prefix = '/topic/foo'
-        self.pub.publish('module.state.change', 'test', None, 'mbs')
+        if legacy_stomp:
+            stomp_conn_path = 'mbs_messaging_umb.publisher.stomp.Connection'
+        else:
+            stomp_conn_path = 'mbs_messaging_umb.publisher.stomp.Connection11'
+        with patch(stomp_conn_path) as Conn:
+            self.pub._using_legacy_stomppy = legacy_stomp
+            self.pub.publish('module.state.change', 'test', None, 'mbs')
+
         assert Conn.call_count == 1
         conn = Conn.return_value
         conn.start.assert_called_once_with()
         conn.connect.assert_called_once_with(wait=True)
         assert conn.send.call_count == 1
         args, kws = conn.send.call_args
-        assert len(args) == 0
-        assert len(kws) == 2
-        headers = kws['headers']
-        assert headers['content-type'] == 'text/json'
-        assert headers['content-length'] == len(json.dumps('test'))
-        assert headers['destination'] == '/topic/foo.module.state.change'
+        if legacy_stomp:
+            assert len(args) == 0
+            assert len(kws) == 2
+            headers = kws['headers']
+            assert headers['content-type'] == 'text/json'
+            assert headers['content-length'] == len(json.dumps('test'))
+            assert headers['destination'] == '/topic/foo.module.state.change'
+        else:
+            assert args == ('/topic/foo.module.state.change', '"test"')
+            assert kws == {'content_type': 'text/json'}
 
+    @pytest.mark.parametrize('legacy_stomp', [True, False])
     @patch('mbs_messaging_umb.publisher.load_config')
-    @patch('mbs_messaging_umb.publisher.stomp.Connection')
     @patch('mbs_messaging_umb.publisher.fedmsg.config')
-    def test_publish_json(self, fm_conf, Conn, load_conf):
+    def test_publish_json(self, fm_conf, load_conf, legacy_stomp):
         fm_conf.load_config.return_value = {
             'stomp_uri': 'foo:1234',
             'stomp_ssl_crt': '/tmp/crt',
             'stomp_ssl_key': '/tmp/key',
         }
         load_conf.return_value.dest_prefix = '/topic/foo'
+        if legacy_stomp:
+            stomp_conn_path = 'mbs_messaging_umb.publisher.stomp.Connection'
+        else:
+            stomp_conn_path = 'mbs_messaging_umb.publisher.stomp.Connection11'
         msg = {'foo': 1, 'bar': 'baz'}
-        self.pub.publish('module.state.change', msg, None, 'mbs')
+        with patch(stomp_conn_path) as Conn:
+            self.pub._using_legacy_stomppy = legacy_stomp
+            self.pub.publish('module.state.change', msg, None, 'mbs')
+
         conn = Conn.return_value
         assert conn.send.call_count == 1
         args, kws = conn.send.call_args
-        assert len(kws) == 2
-        assert 'message' in kws
-        sent_msg = kws['message']
+        if legacy_stomp:
+            assert len(kws) == 2
+            assert 'message' in kws
+            sent_msg = kws['message']
+        else:
+            assert len(args) == 2
+            _, sent_msg = args
         assert isinstance(sent_msg, str)
         assert msg == json.loads(sent_msg)
 
+    @pytest.mark.parametrize('legacy_stomp', [True, False])
     @patch('mbs_messaging_umb.publisher.load_config')
-    @patch('mbs_messaging_umb.publisher.stomp.Connection')
     @patch('mbs_messaging_umb.publisher.fedmsg.config')
-    def test_stomp_publish(self, fm_conf, Conn, load_conf):
+    def test_stomp_publish(self, fm_conf, load_conf, legacy_stomp):
         fm_conf.load_config.return_value = {
             'stomp_uri': 'foo:1234',
             'stomp_ssl_crt': '/tmp/crt',
             'stomp_ssl_key': '/tmp/key',
         }
         load_conf.return_value.dest_prefix = '/topic/foo'
-        mbs_messaging_umb.stomp_publish('module.state.change', 'test', None, 'mbs')
-        conn = Conn.return_value
-        conn.start.assert_called_once_with()
-        conn.connect.assert_called_once_with(wait=True)
-        assert conn.send.call_count == 1
-        args, kws = conn.send.call_args
-        assert len(args) == 0
-        assert len(kws) == 2
-        headers = kws['headers']
-        assert headers['content-type'] == 'text/json'
-        assert headers['content-length'] == len(json.dumps('test'))
-        assert headers['destination'] == '/topic/foo.module.state.change'
 
-        # send another message to use the cached publisher
-        mbs_messaging_umb.stomp_publish('module.state.change2', 'test2', None, 'mbs')
-        args, kws = conn.send.call_args
-        assert len(args) == 0
-        assert len(kws) == 2
-        headers = kws['headers']
-        assert headers['content-type'] == 'text/json'
-        assert headers['content-length'] == len(json.dumps('test2'))
-        assert headers['destination'] == '/topic/foo.module.state.change2'
+        if legacy_stomp:
+            stomp_conn_path = 'mbs_messaging_umb.publisher.stomp.Connection'
+        else:
+            stomp_conn_path = 'mbs_messaging_umb.publisher.stomp.Connection11'
+        with patch('mbs_messaging_umb.publisher.StompPublisher.using_legacy_stomppy',
+                   new_callable=PropertyMock,
+                   return_value=legacy_stomp):
+            with patch(stomp_conn_path) as Conn:
+                mbs_messaging_umb.stomp_publish('module.state.change', 'test', None, 'mbs')
+                conn = Conn.return_value
+
+                conn.start.assert_called_once_with()
+                conn.connect.assert_called_once_with(wait=True)
+                assert conn.send.call_count == 1
+                args, kws = conn.send.call_args
+                if legacy_stomp:
+                    assert len(args) == 0
+                    assert len(kws) == 2
+                    headers = kws['headers']
+                    assert headers['content-type'] == 'text/json'
+                    assert headers['content-length'] == len(json.dumps('test'))
+                    assert headers['destination'] == '/topic/foo.module.state.change'
+                else:
+                    assert len(args) == 2
+                    assert args == ('/topic/foo.module.state.change', '"test"')
+                    assert kws == {'content_type': 'text/json'}
+
+                # send another message to use the cached publisher
+                mbs_messaging_umb.stomp_publish('module.state.change2', 'test2', None, 'mbs')
+                args, kws = conn.send.call_args
+                if legacy_stomp:
+                    assert len(args) == 0
+                    assert len(kws) == 2
+                    headers = kws['headers']
+                    assert headers['content-type'] == 'text/json'
+                    assert headers['content-length'] == len(json.dumps('test2'))
+                    assert headers['destination'] == '/topic/foo.module.state.change2'
+                else:
+                    assert args == ('/topic/foo.module.state.change2', '"test2"')
+                    assert kws == {'content_type': 'text/json'}
