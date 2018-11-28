@@ -23,8 +23,10 @@
 
 import json
 import os
-import unittest
 from mock import patch
+
+import pytest
+
 import mbs_messaging_umb
 import mbs_messaging_umb.conf
 # XXX horrible hack to get tests running in travis-ci
@@ -37,24 +39,25 @@ sys.modules['kobo.rpmlib'] = ''
 # XXX
 
 
-class TestPublisher(unittest.TestCase):
+class TestPublisher(object):
 
     @patch('mbs_messaging_umb.publisher.fedmsg.config')
-    def setUp(self, fm_conf):
-        self.pub = mbs_messaging_umb.StompPublisher()
+    def setup_method(self, test_method, fm_conf):
+        with patch('mbs_messaging_umb.publisher.fedmsg.config'):
+            self.pub = mbs_messaging_umb.StompPublisher()
 
     def test_to_host_and_port(self):
         result = self.pub._to_host_and_port('localhost')
-        self.assertEqual(result, [('localhost', 61612)])
+        assert result == [('localhost', 61612)]
         result = self.pub._to_host_and_port('localhost:1234')
-        self.assertEqual(result, [('localhost', 1234)])
+        assert result == [('localhost', 1234)]
         result = self.pub._to_host_and_port('foo:123,bar,baz:456')
-        self.assertEqual(result, [('foo', 123), ('bar', 61612), ('baz', 456)])
+        assert result, [('foo', 123), ('bar', 61612), ('baz', 456)]
 
     @patch('mbs_messaging_umb.publisher.fedmsg.config')
     def test_missing_fedmsg_config(self, fm_conf):
         fm_conf.load_config.return_value = {}
-        with self.assertRaisesRegexp(RuntimeError, '^missing config: '):
+        with pytest.raises(RuntimeError, match='^missing config: '):
             self.pub.publish(None, None, None, None)
 
     @patch.object(mbs_messaging_umb.conf, '_CONF_MODULE', new=None)
@@ -62,7 +65,7 @@ class TestPublisher(unittest.TestCase):
     @patch('mbs_messaging_umb.conf.log')
     def test_missing_config_file(self, log):
         conf = mbs_messaging_umb.conf.load_config()
-        self.assertIsNone(conf)
+        assert conf is None
         log.exception.assert_called_once_with('Could not load config file: /foo')
 
     @patch('mbs_messaging_umb.publisher.load_config')
@@ -76,18 +79,18 @@ class TestPublisher(unittest.TestCase):
         }
         load_conf.return_value.dest_prefix = '/topic/foo'
         self.pub.publish('module.state.change', 'test', None, 'mbs')
-        self.assertEqual(Conn.call_count, 1)
+        assert Conn.call_count == 1
         conn = Conn.return_value
         conn.start.assert_called_once_with()
         conn.connect.assert_called_once_with(wait=True)
-        self.assertEqual(conn.send.call_count, 1)
+        assert conn.send.call_count == 1
         args, kws = conn.send.call_args
-        self.assertEqual(len(args), 0)
-        self.assertEqual(len(kws), 2)
+        assert len(args) == 0
+        assert len(kws) == 2
         headers = kws['headers']
-        self.assertEqual(headers['content-type'], 'text/json')
-        self.assertEqual(headers['content-length'], len(json.dumps('test')))
-        self.assertEqual(headers['destination'], '/topic/foo.module.state.change')
+        assert headers['content-type'] == 'text/json'
+        assert headers['content-length'] == len(json.dumps('test'))
+        assert headers['destination'] == '/topic/foo.module.state.change'
 
     @patch('mbs_messaging_umb.publisher.load_config')
     @patch('mbs_messaging_umb.publisher.stomp.Connection')
@@ -102,13 +105,13 @@ class TestPublisher(unittest.TestCase):
         msg = {'foo': 1, 'bar': 'baz'}
         self.pub.publish('module.state.change', msg, None, 'mbs')
         conn = Conn.return_value
-        self.assertEqual(conn.send.call_count, 1)
+        assert conn.send.call_count == 1
         args, kws = conn.send.call_args
-        self.assertEqual(len(kws), 2)
-        self.assertIn('message', kws)
+        assert len(kws) == 2
+        assert 'message' in kws
         sent_msg = kws['message']
-        self.assertIsInstance(sent_msg, str)
-        self.assertEqual(msg, json.loads(sent_msg))
+        assert isinstance(sent_msg, str)
+        assert msg == json.loads(sent_msg)
 
     @patch('mbs_messaging_umb.publisher.load_config')
     @patch('mbs_messaging_umb.publisher.stomp.Connection')
@@ -124,21 +127,21 @@ class TestPublisher(unittest.TestCase):
         conn = Conn.return_value
         conn.start.assert_called_once_with()
         conn.connect.assert_called_once_with(wait=True)
-        self.assertEqual(conn.send.call_count, 1)
+        assert conn.send.call_count == 1
         args, kws = conn.send.call_args
-        self.assertEqual(len(args), 0)
-        self.assertEqual(len(kws), 2)
+        assert len(args) == 0
+        assert len(kws) == 2
         headers = kws['headers']
-        self.assertEqual(headers['content-type'], 'text/json')
-        self.assertEqual(headers['content-length'], len(json.dumps('test')))
-        self.assertEqual(headers['destination'], '/topic/foo.module.state.change')
+        assert headers['content-type'] == 'text/json'
+        assert headers['content-length'] == len(json.dumps('test'))
+        assert headers['destination'] == '/topic/foo.module.state.change'
 
         # send another message to use the cached publisher
         mbs_messaging_umb.stomp_publish('module.state.change2', 'test2', None, 'mbs')
         args, kws = conn.send.call_args
-        self.assertEqual(len(args), 0)
-        self.assertEqual(len(kws), 2)
+        assert len(args) == 0
+        assert len(kws) == 2
         headers = kws['headers']
-        self.assertEqual(headers['content-type'], 'text/json')
-        self.assertEqual(headers['content-length'], len(json.dumps('test2')))
-        self.assertEqual(headers['destination'], '/topic/foo.module.state.change2')
+        assert headers['content-type'] == 'text/json'
+        assert headers['content-length'] == len(json.dumps('test2'))
+        assert headers['destination'] == '/topic/foo.module.state.change2'
