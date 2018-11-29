@@ -20,19 +20,16 @@
 #
 # Written by Mike Bonnet <mikeb@redhat.com>
 
-
 from copy import deepcopy
-# XXX horrible hack to get tests running in travis-ci
-# remove when koji is in pypi
-# For more info, see:
-# https://lists.fedoraproject.org/archives/list/koji-devel@lists.fedorahosted.org/thread/XLIR4DSXXRU3OYWXEZWJQJAEEIOUQEXY/
-# koji is targeted for inclusion in pypi during the 1.15 development cycle.
-import sys
-sys.modules['kobo.rpmlib'] = ''
-# XXX
-from module_build_service.messaging import KojiRepoChange
 from mock import patch, MagicMock
 from mbs_messaging_umb.parser import CustomParser
+
+
+# A horrible hack to avoid MBS from detecting pytest is running and using a
+# test configuration that is not available as part of the RPM. See
+# `module_build_service.config.init_config` for more information.
+with patch('sys.argv'):
+    from module_build_service.messaging import KojiRepoChange
 
 
 class TestCustomParser(object):

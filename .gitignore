@@ -5,3 +5,5 @@
 .tox/
 .coverage
 .coverage.*
+
+mbs_messaging_umb.egg-info/
