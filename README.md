@@ -28,9 +28,9 @@ Build Status
 Running the Tests
 -----------------
 
-    # install the test tool
-    $ sudo dnf install python2-detox
-    # Run it.
-    $ detox
-
-If detox is unavailable on your system, you can also use plain old tox.
+    # Install Docker
+    $ sudo dnf install docker
+    # Build the container
+    $ sudo docker build -t mbs-messaging-umb-tests -f Dockerfile-tests .
+    # Run the tests
+    $ sudo docker run -it -v $PWD:/src:Z mbs-messaging-umb-tests

@@ -82,12 +82,16 @@ class TestPublisher(object):
             stomp_conn_path = 'mbs_messaging_umb.publisher.stomp.Connection'
         else:
             stomp_conn_path = 'mbs_messaging_umb.publisher.stomp.Connection11'
-        with patch(stomp_conn_path) as Conn:
+        with patch(stomp_conn_path, create=True) as Conn:
+            conn = Conn.return_value
+            if not legacy_stomp:
+                # In case the old version of stomp.py is installed, then mock
+                # current_host_and_port
+                conn.transport.current_host_and_port = ('127.0.0.1', '123')
             self.pub._using_legacy_stomppy = legacy_stomp
             self.pub.publish('module.state.change', 'test', None, 'mbs')
 
         assert Conn.call_count == 1
-        conn = Conn.return_value
         conn.start.assert_called_once_with()
         conn.connect.assert_called_once_with(wait=True)
         assert conn.send.call_count == 1
@@ -118,11 +122,15 @@ class TestPublisher(object):
         else:
             stomp_conn_path = 'mbs_messaging_umb.publisher.stomp.Connection11'
         msg = {'foo': 1, 'bar': 'baz'}
-        with patch(stomp_conn_path) as Conn:
+        with patch(stomp_conn_path, create=True) as Conn:
+            conn = Conn.return_value
+            if not legacy_stomp:
+                # In case the old version of stomp.py is installed, then mock
+                # current_host_and_port
+                conn.transport.current_host_and_port = ('127.0.0.1', '123')
             self.pub._using_legacy_stomppy = legacy_stomp
             self.pub.publish('module.state.change', msg, None, 'mbs')
 
-        conn = Conn.return_value
         assert conn.send.call_count == 1
         args, kws = conn.send.call_args
         if legacy_stomp:
@@ -153,9 +161,13 @@ class TestPublisher(object):
         with patch('mbs_messaging_umb.publisher.StompPublisher.using_legacy_stomppy',
                    new_callable=PropertyMock,
                    return_value=legacy_stomp):
-            with patch(stomp_conn_path) as Conn:
-                mbs_messaging_umb.stomp_publish('module.state.change', 'test', None, 'mbs')
+            with patch(stomp_conn_path, create=True) as Conn:
                 conn = Conn.return_value
+                if not legacy_stomp:
+                    # In case the old version of stomp.py is installed, then mock
+                    # current_host_and_port
+                    conn.transport.current_host_and_port = ('127.0.0.1', '123')
+                mbs_messaging_umb.stomp_publish('module.state.change', 'test', None, 'mbs')
 
                 conn.start.assert_called_once_with()
                 conn.connect.assert_called_once_with(wait=True)

@@ -1,0 +1,23 @@
+FROM centos:7
+
+RUN yum -y update
+RUN yum -y install epel-release yum-utils
+# This repo contains the latest version of MBS
+RUN yum-config-manager --add-repo https://kojipkgs.fedoraproject.org/repos-dist/epel7Server-infra/latest/x86_64/
+RUN yum -y install \
+    --nogpgcheck \
+    --setopt=deltarpm=0 \
+    --setopt=install_weak_deps=false \
+    --setopt=tsflags=nodocs \
+    module-build-service \
+    python-jsonpath-rw \
+    python-pip \
+    python-tox \
+    rpm-devel \
+    stomppy \
+    && yum clean all
+# We currently require newer versions of these Python packages for the tests
+RUN pip install --upgrade pip tox
+VOLUME /src
+WORKDIR /src
+CMD ["tox", "-r"]
