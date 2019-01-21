@@ -21,9 +21,9 @@
 #
 # Written by Mike Bonnet <mikeb@redhat.com>
 
-from parser import CustomParser
-from publisher import StompPublisher
-from conf import load_config
+from .parser import CustomParser
+from .publisher import StompPublisher
+from .conf import load_config
 
 
 _publisher = None

@@ -28,7 +28,7 @@ import ssl
 import uuid
 import stomp
 import fedmsg.config
-from conf import load_config
+from .conf import load_config
 
 
 class StompPublisher(object):
