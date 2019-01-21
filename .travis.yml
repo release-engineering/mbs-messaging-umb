@@ -3,5 +3,7 @@ sudo: required
 services: docker
 install:
   - docker build -t mbs-messaging-umb-tests -f Dockerfile-tests .
+  - docker build --no-cache -t mbs-messaging-umb-tests-py3 -f Dockerfile-tests-py3 .
 script:
   - docker run -v $PWD:/src:Z mbs-messaging-umb-tests
+  - docker run -v $PWD:/src:Z mbs-messaging-umb-tests-py3
