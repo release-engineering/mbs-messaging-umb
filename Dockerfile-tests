@@ -20,4 +20,4 @@ RUN yum -y install \
 RUN pip install --upgrade pip tox
 VOLUME /src
 WORKDIR /src
-CMD ["tox", "-r"]
+CMD ["tox", "-r", "-e", "py27,coverage,flake8,bandit"]

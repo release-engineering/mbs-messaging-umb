@@ -25,7 +25,7 @@ import logging
 import inspect
 import fnmatch
 import jsonpath_rw
-from conf import load_config
+from .conf import load_config
 
 
 class CustomParser(object):
@@ -47,18 +47,18 @@ class CustomParser(object):
         for cls_name, mapping in self.conf.message_mapping.items():
             # extracts the topic from the message
             if 'topic' not in mapping:
-                self.log.warn('No topic path configured for %s, skipping', cls_name)
+                self.log.warning('No topic path configured for %s, skipping', cls_name)
                 continue
             topic_expr = jsonpath_rw.parse(mapping['topic'])
             results = [r.value for r in topic_expr.find(msg)]
             if not results:
-                self.log.warn('No topic found at %s, skipping', mapping['topic'])
+                self.log.warning('No topic found at %s, skipping', mapping['topic'])
                 continue
             topic = results[0]
 
             # we have the message topic, now see if it it's a match for this class
             if 'matches' not in mapping:
-                self.log.warn('No topic match configured for %s, skipping', cls_name)
+                self.log.warning('No topic match configured for %s, skipping', cls_name)
                 continue
             matches = mapping['matches']
             if not isinstance(matches, (list, tuple)):
@@ -91,7 +91,7 @@ class CustomParser(object):
             # get a reference to the class and construct an instance
             msg_cls = getattr(module_build_service.messaging, cls_name, None)
             if not msg_cls:
-                self.log.warn('Could not find %s class, skipping', cls_name)
+                self.log.warning('Could not find %s class, skipping', cls_name)
                 continue
             try:
                 return msg_cls(**attrs)
