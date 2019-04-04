@@ -36,9 +36,17 @@ message_mapping = {
         'msg_id': 'headers.message-id',
         'module_build_id': 'body.id',
         'module_build_state': 'body.state',
+    },
+    'GreenwaveDecisionUpdate': {
+        'matches': ['/topic/VirtualTopic.eng.greenwave.decision.update'],
+        'topic': 'topic',
+        'msg_id': 'headers.message-id',
+        'decision_context': 'msg.decision_context',
+        'subject_identifier': 'msg.subject_identifier',
+        'policies_satisfied': 'msg.policies_satisfied'
     }
 }
 
-services = ['brew', 'mbs']
+services = ['brew', 'mbs', 'greenwave']
 topic_suffix = '.>'
 dest_prefix = '/topic/VirtualTopic.eng.mbs'

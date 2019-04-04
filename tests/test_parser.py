@@ -21,7 +21,7 @@
 # Written by Mike Bonnet <mikeb@redhat.com>
 
 from copy import deepcopy
-from mock import patch, MagicMock
+from mock import patch, MagicMock, Mock
 from mbs_messaging_umb.parser import CustomParser
 
 
@@ -29,6 +29,7 @@ from mbs_messaging_umb.parser import CustomParser
 # test configuration that is not available as part of the RPM. See
 # `module_build_service.config.init_config` for more information.
 with patch('sys.argv'):
+    import module_build_service.messaging
     from module_build_service.messaging import KojiRepoChange
 
 
@@ -52,7 +53,15 @@ class TestCustomParser(object):
             'topic': 'topic',
             'msg_id': 'headers.message-id',
             'repo_tag': 'msg.repo.tag_name',
-        }
+        },
+        'GreenwaveDecisionUpdate': {
+            'matches': ['/topic/VirtualTopic.eng.greenwave.decision.update'],
+            'topic': 'topic',
+            'msg_id': 'headers.message-id',
+            'decision_context': 'msg.decision_context',
+            'subject_identifier': 'msg.subject_identifier',
+            'policies_satisfied': 'msg.policies_satisfied'
+        },
     }
 
     @patch('mbs_messaging_umb.parser.load_config')
@@ -129,3 +138,24 @@ class TestCustomParser(object):
             = 'msg.foo'
         msg = self.parser.parse(repo_msg)
         assert msg is None
+
+    def test_parse_greenwave_decision_update_msg(self):
+        klass = Mock(name='GreenwaveDecisionUpdate')
+        with patch.object(module_build_service.messaging,
+                          'GreenwaveDecisionUpdate', new=klass, create=True):
+            self.parser.parse({
+                'topic': '/topic/VirtualTopic.eng.greenwave.decision.update',
+                'headers': {'message-id': 'msg-id-1'},
+                'msg': {
+                    'decision_context': 'osci_compose_gate_modules',
+                    'subject_identifier': 'pkg-1.0-1.c1',
+                    'policies_satisfied': True,
+                }
+            })
+
+        klass.assert_called_once_with(**{
+            'msg_id': 'msg-id-1',
+            'decision_context': 'osci_compose_gate_modules',
+            'subject_identifier': 'pkg-1.0-1.c1',
+            'policies_satisfied': True,
+        })
