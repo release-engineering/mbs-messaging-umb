@@ -58,9 +58,9 @@ class TestCustomParser(object):
             'matches': ['/topic/VirtualTopic.eng.greenwave.decision.update'],
             'topic': 'topic',
             'msg_id': 'headers.message-id',
-            'decision_context': 'msg.decision_context',
-            'subject_identifier': 'msg.subject_identifier',
-            'policies_satisfied': 'msg.policies_satisfied'
+            'decision_context': 'body.msg.decision_context',
+            'subject_identifier': 'body.msg.subject_identifier',
+            'policies_satisfied': 'body.msg.policies_satisfied'
         },
     }
 
@@ -146,10 +146,12 @@ class TestCustomParser(object):
             self.parser.parse({
                 'topic': '/topic/VirtualTopic.eng.greenwave.decision.update',
                 'headers': {'message-id': 'msg-id-1'},
-                'msg': {
-                    'decision_context': 'osci_compose_gate_modules',
-                    'subject_identifier': 'pkg-1.0-1.c1',
-                    'policies_satisfied': True,
+                'body': {
+                    'msg': {
+                        'decision_context': 'osci_compose_gate_modules',
+                        'subject_identifier': 'pkg-1.0-1.c1',
+                        'policies_satisfied': True,
+                    }
                 }
             })
 

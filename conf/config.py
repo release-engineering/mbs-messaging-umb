@@ -41,9 +41,9 @@ message_mapping = {
         'matches': ['/topic/VirtualTopic.eng.greenwave.decision.update'],
         'topic': 'topic',
         'msg_id': 'headers.message-id',
-        'decision_context': 'msg.decision_context',
-        'subject_identifier': 'msg.subject_identifier',
-        'policies_satisfied': 'msg.policies_satisfied'
+        'decision_context': 'body.msg.decision_context',
+        'subject_identifier': 'body.msg.subject_identifier',
+        'policies_satisfied': 'body.msg.policies_satisfied'
     }
 }
 
