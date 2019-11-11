@@ -22,7 +22,6 @@
 # Written by Mike Bonnet <mikeb@redhat.com>
 
 import logging
-import inspect
 import fnmatch
 import jsonpath_rw
 from .conf import load_config
@@ -44,10 +43,17 @@ class CustomParser(object):
         :return: a subclass of BaseMessage. If there is no mapping defined
                  for the topic the message was delivered to, return None.
         """
-        for cls_name, mapping in self.conf.message_mapping.items():
+        from module_build_service.scheduler import events
+
+        for event, mapping in self.conf.message_mapping.items():
+            event_name = getattr(events, event.upper(), None)
+            if event_name is None:
+                self.log.warning('Event %s is not defined by MBS.', event)
+                continue
+
             # extracts the topic from the message
             if 'topic' not in mapping:
-                self.log.warning('No topic path configured for %s, skipping', cls_name)
+                self.log.warning('No topic path configured for %s, skipping', event)
                 continue
             topic_expr = jsonpath_rw.parse(mapping['topic'])
             results = [r.value for r in topic_expr.find(msg)]
@@ -58,7 +64,7 @@ class CustomParser(object):
 
             # we have the message topic, now see if it it's a match for this class
             if 'matches' not in mapping:
-                self.log.warning('No topic match configured for %s, skipping', cls_name)
+                self.log.warning('No topic match configured for %s, skipping', event)
                 continue
             matches = mapping['matches']
             if not isinstance(matches, (list, tuple)):
@@ -66,49 +72,29 @@ class CustomParser(object):
             for match in matches:
                 if fnmatch.fnmatch(topic, match):
                     self.log.debug('Topic %s matched %s, using class %s',
-                                   topic, match, cls_name)
+                                   topic, match, event)
                     break
             else:
-                self.log.debug('%s does not match topic %s, skipping', cls_name, topic)
+                self.log.debug('%s does not match topic %s, skipping', event, topic)
                 continue
 
             # we know this is the correct class, so extract the rest of the
             # attribute values from the message
-            attrs = {}
+            event_info = {'event': event_name}
             for attr, path in mapping.items():
                 if attr in ['topic', 'matches']:
+                    continue
+                if path is None:
+                    event_info[attr] = None
                     continue
                 attr_expr = jsonpath_rw.parse(path)
                 results = [r.value for r in attr_expr.find(msg)]
                 if results:
-                    attrs[attr] = results[0]
+                    event_info[attr] = results[0]
                 else:
-                    attrs[attr] = None
+                    event_info[attr] = None
 
-            # can't import at the top of the file, or we create a circular
-            # reference at class-loading time
-            import module_build_service.messaging
-            # get a reference to the class and construct an instance
-            msg_cls = getattr(module_build_service.messaging, cls_name, None)
-            if not msg_cls:
-                self.log.warning('Could not find %s class, skipping', cls_name)
-                continue
-            try:
-                return msg_cls(**attrs)
-            except module_build_service.messaging.IgnoreMessage as e:
-                # These are harmless
-                self.log.debug(e)
-            except Exception:
-                accepted_args = inspect.getargspec(msg_cls.__init__).args
-                # Remove 'self' from the accepted arguments
-                accepted_args.pop(0)
-                error = ('Error constructing {0}. The args of the constructor '
-                         'are: {1}. The args passed in were (not in order): {2}'
-                         .format(cls_name, ', '.join(accepted_args),
-                                 ', '.join(attrs.keys())))
-                # incorrect number of parameters passed to the constructor, probably
-                self.log.exception(error)
-                continue
+            return event_info
 
         # nothing worked
         return None
