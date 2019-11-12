@@ -6,4 +6,7 @@
 .coverage
 .coverage.*
 
+.env/
+.idea/
+htmlcov/
 mbs_messaging_umb.egg-info/
