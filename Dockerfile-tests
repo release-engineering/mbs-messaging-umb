@@ -17,7 +17,7 @@ RUN yum -y install \
     stomppy \
     && yum clean all
 # We currently require newer versions of these Python packages for the tests
-RUN pip install --upgrade pip tox
+RUN pip install --upgrade pip tox && pip install -I "more-itertools<6.0.0"
 VOLUME /src
 WORKDIR /src
 CMD ["tox", "-r", "-e", "py27,coverage,flake8,bandit"]
