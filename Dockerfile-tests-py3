@@ -7,7 +7,7 @@ RUN dnf -y install \
     python3-tox \
     python3-stomppy \
     python3-jsonpath-rw \
-    module-build-service \
+    python3-fedmsg \
     && dnf clean all
 
 VOLUME /src

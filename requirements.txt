@@ -1,3 +1,2 @@
 jsonpath-rw
-# module-build-service
 stomp.py >= 3.1.6, < 5.0.0
