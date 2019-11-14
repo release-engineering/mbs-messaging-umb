@@ -1,5 +1,5 @@
 message_mapping = {
-    'KojiBuildChange': {
+    'koji_build_change': {
         'matches': [
             '/topic/VirtualTopic.eng.brew.build.building',
             '/topic/VirtualTopic.eng.brew.build.complete',
@@ -15,29 +15,31 @@ message_mapping = {
         'build_name': 'body.info.name',
         'build_version': 'body.info.version',
         'build_release': 'body.info.release',
+        'module_build_id': None,
+        'state_reason': None,
     },
-    'KojiTagChange': {
+    'koji_tag_change': {
         'matches': ['/topic/VirtualTopic.eng.brew.build.tag'],
         'topic': 'topic',
         'msg_id': 'headers.message-id',
-        'tag': 'body.tag.name',
-        'artifact': 'body.build.name',
-        'nvr': 'body.build.nvr',
+        'tag_name': 'body.tag.name',
+        'build_name': 'body.build.name',
+        'build_nvr': 'body.build.nvr',
     },
-    'KojiRepoChange': {
+    'koji_repo_change': {
         'matches': ['/topic/VirtualTopic.eng.brew.repo.done'],
         'topic': 'topic',
         'msg_id': 'headers.message-id',
         'repo_tag': 'body.repo.tag_name',
     },
-    'MBSModule': {
+    'mbs_module_state_change': {
         'matches': ['/topic/VirtualTopic.eng.mbs.module.state.change'],
         'topic': 'topic',
         'msg_id': 'headers.message-id',
         'module_build_id': 'body.id',
         'module_build_state': 'body.state',
     },
-    'GreenwaveDecisionUpdate': {
+    'greenwave_decision_update': {
         'matches': ['/topic/VirtualTopic.eng.greenwave.decision.update'],
         'topic': 'topic',
         'msg_id': 'headers.message-id',

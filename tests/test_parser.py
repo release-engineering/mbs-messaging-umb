@@ -21,16 +21,8 @@
 # Written by Mike Bonnet <mikeb@redhat.com>
 
 from copy import deepcopy
-from mock import patch, MagicMock, Mock
+from mock import patch, MagicMock
 from mbs_messaging_umb.parser import CustomParser
-
-
-# A horrible hack to avoid MBS from detecting pytest is running and using a
-# test configuration that is not available as part of the RPM. See
-# `module_build_service.config.init_config` for more information.
-with patch('sys.argv'):
-    import module_build_service.messaging
-    from module_build_service.messaging import KojiRepoChange
 
 
 class TestCustomParser(object):
@@ -48,13 +40,13 @@ class TestCustomParser(object):
     }
 
     repo_mapping = {
-        'KojiRepoChange': {
+        'koji_repo_change': {
             'matches': ['/topic/VirtualTopic.koji.repo.done'],
             'topic': 'topic',
             'msg_id': 'headers.message-id',
             'repo_tag': 'msg.repo.tag_name',
         },
-        'GreenwaveDecisionUpdate': {
+        'greenwave_decision_update': {
             'matches': ['/topic/VirtualTopic.eng.greenwave.decision.update'],
             'topic': 'topic',
             'msg_id': 'headers.message-id',
@@ -71,43 +63,43 @@ class TestCustomParser(object):
 
     def test_koji_repo_msg(self):
         msg = self.parser.parse(self.repo_msg)
-        assert isinstance(msg, KojiRepoChange)
-        assert msg.msg_id == self.repo_msg['headers']['message-id']
-        assert msg.repo_tag == self.repo_msg['msg']['repo']['tag_name']
+        assert msg['event'] == 'koji_repo_change'
+        assert msg['msg_id'] == self.repo_msg['headers']['message-id']
+        assert msg['repo_tag'] == self.repo_msg['msg']['repo']['tag_name']
 
         # make sure it works when 'matches' is a string too
-        self.parser.conf.message_mapping['KojiRepoChange']['matches'] \
+        self.parser.conf.message_mapping['koji_repo_change']['matches'] \
             = '/topic/VirtualTopic.koji.repo.done'
         msg = self.parser.parse(self.repo_msg)
-        assert isinstance(msg, KojiRepoChange)
-        assert msg.msg_id == self.repo_msg['headers']['message-id']
-        assert msg.repo_tag == self.repo_msg['msg']['repo']['tag_name']
+        assert msg['event'] == 'koji_repo_change'
+        assert msg['msg_id'] == self.repo_msg['headers']['message-id']
+        assert msg['repo_tag'] == self.repo_msg['msg']['repo']['tag_name']
 
     def test_koji_repo_msg_wildcard(self):
-        self.parser.conf.message_mapping['KojiRepoChange']['matches'] = [
+        self.parser.conf.message_mapping['koji_repo_change']['matches'] = [
             '/topic/VirtualTopic.koji.repo.*'
         ]
         msg = self.parser.parse(self.repo_msg)
-        assert isinstance(msg, KojiRepoChange)
-        assert msg.msg_id == self.repo_msg['headers']['message-id']
-        assert msg.repo_tag == self.repo_msg['msg']['repo']['tag_name']
+        assert msg['event'] == 'koji_repo_change'
+        assert msg['msg_id'] == self.repo_msg['headers']['message-id']
+        assert msg['repo_tag'] == self.repo_msg['msg']['repo']['tag_name']
 
     def test_koji_repo_msg_noattrs(self):
         repo_msg = {
             'topic': '/topic/VirtualTopic.koji.repo.done',
         }
         msg = self.parser.parse(repo_msg)
-        assert isinstance(msg, KojiRepoChange)
-        assert msg.msg_id is None
-        assert msg.repo_tag is None
+        assert msg['event'] == 'koji_repo_change'
+        assert msg['msg_id'] is None
+        assert msg['repo_tag'] is None
 
     def test_koji_repo_msg_no_topic_mapping(self):
-        del self.parser.conf.message_mapping['KojiRepoChange']['topic']
+        del self.parser.conf.message_mapping['koji_repo_change']['topic']
         msg = self.parser.parse(self.repo_msg)
         assert msg is None
 
     def test_koji_repo_msg_no_matches_mapping(self):
-        del self.parser.conf.message_mapping['KojiRepoChange']['matches']
+        del self.parser.conf.message_mapping['koji_repo_change']['matches']
         msg = self.parser.parse(self.repo_msg)
         assert msg is None
 
@@ -118,7 +110,7 @@ class TestCustomParser(object):
         assert msg is None
 
     def test_koji_repo_msg_nomatch(self):
-        self.parser.conf.message_mapping['KojiRepoChange']['matches'] = [
+        self.parser.conf.message_mapping['koji_repo_change']['matches'] = [
             '/topic/VirtualTopic.koji.repo.foo'
         ]
         msg = self.parser.parse(self.repo_msg)
@@ -126,38 +118,28 @@ class TestCustomParser(object):
 
     def test_koji_repo_msg_noclass(self):
         self.parser.conf.message_mapping['FooBar'] \
-            = self.parser.conf.message_mapping['KojiRepoChange']
-        del self.parser.conf.message_mapping['KojiRepoChange']
+            = self.parser.conf.message_mapping['koji_repo_change']
+        del self.parser.conf.message_mapping['koji_repo_change']
         msg = self.parser.parse(self.repo_msg)
         assert msg is None
 
-    def test_koji_repo_msg_incorrect_params(self):
-        repo_msg = deepcopy(self.repo_msg)
-        repo_msg['msg']['foo'] = 'bar'
-        self.parser.conf.message_mapping['KojiRepoChange']['foo'] \
-            = 'msg.foo'
-        msg = self.parser.parse(repo_msg)
-        assert msg is None
-
     def test_parse_greenwave_decision_update_msg(self):
-        klass = Mock(name='GreenwaveDecisionUpdate')
-        with patch.object(module_build_service.messaging,
-                          'GreenwaveDecisionUpdate', new=klass, create=True):
-            self.parser.parse({
-                'topic': '/topic/VirtualTopic.eng.greenwave.decision.update',
-                'headers': {'message-id': 'msg-id-1'},
-                'body': {
-                    'msg': {
-                        'decision_context': 'osci_compose_gate_modules',
-                        'subject_identifier': 'pkg-1.0-1.c1',
-                        'policies_satisfied': True,
-                    }
+        msg = self.parser.parse({
+            'topic': '/topic/VirtualTopic.eng.greenwave.decision.update',
+            'headers': {'message-id': 'msg-id-1'},
+            'body': {
+                'msg': {
+                    'decision_context': 'osci_compose_gate_modules',
+                    'subject_identifier': 'pkg-1.0-1.c1',
+                    'policies_satisfied': True,
                 }
-            })
+            }
+        })
 
-        klass.assert_called_once_with(**{
+        assert msg == {
             'msg_id': 'msg-id-1',
+            'event': 'greenwave_decision_update',
             'decision_context': 'osci_compose_gate_modules',
             'subject_identifier': 'pkg-1.0-1.c1',
             'policies_satisfied': True,
-        })
+        }
