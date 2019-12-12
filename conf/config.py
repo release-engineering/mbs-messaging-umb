@@ -9,7 +9,6 @@ message_mapping = {
         ],
         'topic': 'topic',
         'msg_id': 'headers.message-id',
-        'build_id': 'body.info.id',
         'task_id': 'body.info.task_id',
         'build_new_state': 'body.new',
         'build_name': 'body.info.name',
@@ -23,14 +22,13 @@ message_mapping = {
         'topic': 'topic',
         'msg_id': 'headers.message-id',
         'tag_name': 'body.tag.name',
-        'build_name': 'body.build.name',
         'build_nvr': 'body.build.nvr',
     },
     'koji_repo_change': {
         'matches': ['/topic/VirtualTopic.eng.brew.repo.done'],
         'topic': 'topic',
         'msg_id': 'headers.message-id',
-        'repo_tag': 'body.repo.tag_name',
+        'tag_name': 'body.repo.tag_name',
     },
     'mbs_module_state_change': {
         'matches': ['/topic/VirtualTopic.eng.mbs.module.state.change'],
