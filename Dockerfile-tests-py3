@@ -1,4 +1,4 @@
-FROM fedora:29
+FROM fedora:31
 
 RUN dnf -y install \
     --setopt=deltarpm=0 \
@@ -8,8 +8,9 @@ RUN dnf -y install \
     python3-stomppy \
     python3-jsonpath-rw \
     python3-fedmsg \
+    findutils \
     && dnf clean all
 
 VOLUME /src
 WORKDIR /src
-CMD ["tox", "-r", "-e", "py37"]
+CMD ["tox", "-r", "-e", "py37,coverage,flake8,bandit"]
