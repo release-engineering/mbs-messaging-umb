@@ -44,7 +44,7 @@ class TestCustomParser(object):
             'matches': ['/topic/VirtualTopic.koji.repo.done'],
             'topic': 'topic',
             'msg_id': 'headers.message-id',
-            'repo_tag': 'msg.repo.tag_name',
+            'tag_name': 'msg.repo.tag_name',
         },
         'greenwave_decision_update': {
             'matches': ['/topic/VirtualTopic.eng.greenwave.decision.update'],
@@ -65,7 +65,7 @@ class TestCustomParser(object):
         msg = self.parser.parse(self.repo_msg)
         assert msg['event'] == 'koji_repo_change'
         assert msg['msg_id'] == self.repo_msg['headers']['message-id']
-        assert msg['repo_tag'] == self.repo_msg['msg']['repo']['tag_name']
+        assert msg['tag_name'] == self.repo_msg['msg']['repo']['tag_name']
 
         # make sure it works when 'matches' is a string too
         self.parser.conf.message_mapping['koji_repo_change']['matches'] \
@@ -73,7 +73,7 @@ class TestCustomParser(object):
         msg = self.parser.parse(self.repo_msg)
         assert msg['event'] == 'koji_repo_change'
         assert msg['msg_id'] == self.repo_msg['headers']['message-id']
-        assert msg['repo_tag'] == self.repo_msg['msg']['repo']['tag_name']
+        assert msg['tag_name'] == self.repo_msg['msg']['repo']['tag_name']
 
     def test_koji_repo_msg_wildcard(self):
         self.parser.conf.message_mapping['koji_repo_change']['matches'] = [
@@ -82,7 +82,7 @@ class TestCustomParser(object):
         msg = self.parser.parse(self.repo_msg)
         assert msg['event'] == 'koji_repo_change'
         assert msg['msg_id'] == self.repo_msg['headers']['message-id']
-        assert msg['repo_tag'] == self.repo_msg['msg']['repo']['tag_name']
+        assert msg['tag_name'] == self.repo_msg['msg']['repo']['tag_name']
 
     def test_koji_repo_msg_noattrs(self):
         repo_msg = {
@@ -91,7 +91,7 @@ class TestCustomParser(object):
         msg = self.parser.parse(repo_msg)
         assert msg['event'] == 'koji_repo_change'
         assert msg['msg_id'] is None
-        assert msg['repo_tag'] is None
+        assert msg['tag_name'] is None
 
     def test_koji_repo_msg_no_topic_mapping(self):
         del self.parser.conf.message_mapping['koji_repo_change']['topic']
