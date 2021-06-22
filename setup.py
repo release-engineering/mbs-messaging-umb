@@ -10,7 +10,7 @@ setup(
     name='mbs-messaging-umb',
     description='A plugin for the Module Build Service to support sending '
     'and receiving messages from the Unified Message Bus',
-    version='0.1.4',
+    version='0.2.0',
     classifiers=[
         "Programming Language :: Python",
         "Topic :: Software Development :: Build Tools"

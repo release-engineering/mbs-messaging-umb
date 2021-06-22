@@ -1,4 +1,4 @@
-FROM fedora:31
+FROM registry.fedoraproject.org/fedora:latest
 
 RUN dnf -y install \
     --setopt=deltarpm=0 \
@@ -13,4 +13,4 @@ RUN dnf -y install \
 
 VOLUME /src
 WORKDIR /src
-CMD ["tox", "-r", "-e", "py37,coverage,flake8,bandit"]
+CMD ["tox", "-r", "-e", "py39,coverage,flake8,bandit"]
