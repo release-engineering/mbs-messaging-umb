@@ -1,7 +1,13 @@
-language: generic
+language: python
+python:
+  - "3.9"
 sudo: required
 services: docker
+dist: jammy
+before_install:
+  - sudo apt-get update
+  - sudo apt-get -y install podman
 install:
-  - docker build --no-cache -t mbs-messaging-umb-tests-py3 -f Dockerfile-tests-py3 .
+  - sudo podman build --no-cache -t mbs-messaging-umb-tests-py3 -f Dockerfile-tests-py3 .
 script:
-  - docker run -v $PWD:/src:Z mbs-messaging-umb-tests-py3
+  - sudo podman run -v $PWD:/src:Z mbs-messaging-umb-tests-py3

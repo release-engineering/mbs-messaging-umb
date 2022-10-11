@@ -26,6 +26,7 @@ import os
 from mock import patch, PropertyMock
 
 import pytest
+from stomp.exception import ConnectFailedException
 
 import mbs_messaging_umb
 import mbs_messaging_umb.conf
@@ -198,3 +199,37 @@ class TestPublisher(object):
                 else:
                     assert args == ('/topic/foo.module.state.change2', '"test2"')
                     assert kws == {'content_type': 'text/json'}
+
+    @patch("mbs_messaging_umb.publisher.StompPublisher.get_stomp_connection")
+    def test_try_to_get_stomp_connection__connection_obtained_on_the_first_try(
+        self, get_stomp_connection_mock
+    ):
+        expected_connection = get_stomp_connection_mock.return_value
+
+        connection = self.pub._try_to_get_stomp_connection()
+
+        assert connection == expected_connection
+        get_stomp_connection_mock.assert_called_once()
+
+    @patch("mbs_messaging_umb.publisher.StompPublisher.get_stomp_connection")
+    def test_try_to_get_stomp_connection__connection_obtained_after_the_retry(
+        self, get_stomp_connection_mock
+    ):
+        expected_connection = get_stomp_connection_mock.return_value
+        get_stomp_connection_mock.side_effect = [ConnectFailedException, expected_connection]
+
+        connection = self.pub._try_to_get_stomp_connection()
+
+        assert connection == expected_connection
+        assert get_stomp_connection_mock.call_count == 2
+
+    @patch("mbs_messaging_umb.publisher.StompPublisher.get_stomp_connection")
+    def test_try_to_get_stomp_connection__max_retries_reached(
+        self, get_stomp_connection_mock
+    ):
+        get_stomp_connection_mock.side_effect = ConnectFailedException
+
+        with pytest.raises(ConnectFailedException):
+            self.pub._try_to_get_stomp_connection()
+
+        assert get_stomp_connection_mock.call_count == 3

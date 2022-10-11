@@ -28,10 +28,13 @@ import ssl
 import uuid
 import stomp
 import fedmsg.config
+from stomp.exception import ConnectFailedException
+
 from .conf import load_config
 
 
 class StompPublisher(object):
+    _MAX_CONNECTION_RETRIES = 3
 
     def __init__(self):
         self.log = logging.getLogger(__name__)
@@ -105,11 +108,21 @@ class StompPublisher(object):
         self.log.debug('Connected to %s', host_and_port)
         return conn
 
+    def _try_to_get_stomp_connection(self):
+        for attempt in range(1, self._MAX_CONNECTION_RETRIES + 1):
+            try:
+                return self.get_stomp_connection()
+            except ConnectFailedException:
+                if attempt == self._MAX_CONNECTION_RETRIES:
+                    self.log.debug("Max retries reached when trying to get stomp connection.")
+                    raise
+                self.log.debug("Failed to get stomp connection. Attempt %d. Retrying.", attempt)
+
     def publish(self, topic, msg, conf, service):
         """
         Publish a message using the STOMP configuration from fedmsg.
         """
-        conn = self.get_stomp_connection()
+        conn = self._try_to_get_stomp_connection()
         dest = '.'.join([load_config().dest_prefix, topic])
         msg = json.dumps(msg)
 
