@@ -13,4 +13,4 @@ RUN dnf -y install \
 
 VOLUME /src
 WORKDIR /src
-CMD ["tox", "-r", "-e", "py39,coverage,flake8,bandit"]
+CMD ["tox", "-r", "-e", "py3,coverage,flake8,bandit"]
