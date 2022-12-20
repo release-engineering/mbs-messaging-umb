@@ -38,19 +38,6 @@ class StompPublisher(object):
 
     def __init__(self):
         self.log = logging.getLogger(__name__)
-        self._using_legacy_stomppy = None
-
-    @property
-    def using_legacy_stomppy(self):
-        if self._using_legacy_stomppy is None:
-            try:
-                # Check if stomp.py v4+ is being used
-                stomp.Connection11
-                self._using_legacy_stomppy = False
-            except AttributeError:
-                self._using_legacy_stomppy = True
-
-        return self._using_legacy_stomppy
 
     @staticmethod
     def _to_host_and_port(uris):
@@ -79,33 +66,16 @@ class StompPublisher(object):
                 raise RuntimeError('missing config: {0}'.format(opt))
 
         uris = self._to_host_and_port(fm_conf['stomp_uri'])
-        connection_kwargs = {
-            'use_ssl': True,
-            'ssl_cert_file': fm_conf['stomp_ssl_crt'],
-            'ssl_key_file': fm_conf['stomp_ssl_key'],
-            'ssl_ca_certs': '/etc/pki/tls/certs/ca-bundle.crt',
-            'ssl_version': ssl.PROTOCOL_TLSv1_2,
-            'timeout': 10.0
-        }
-        if self.using_legacy_stomppy:
-            conn = stomp.Connection(uris, wait_on_receipt=True, version='1.1', **connection_kwargs)
-        else:
-            # In stomp.py v4, the `version` is determined by the "Connection" class used.
-            # The `Connection` class is also an alias for `Connection11`, but let's use
-            # `Connection11` directly to avoid issues in the future. Also, `wait_on_receipt` is not
-            # supported. See: https://github.com/jasonrbriggs/stomp.py/issues/224
-            conn = stomp.Connection11(uris, **connection_kwargs)
-
-        conn.start()
+        conn = stomp.Connection12(uris, timeout=10.0)
+        conn.set_ssl(
+            for_hosts=uris,
+            cert_file=fm_conf['stomp_ssl_crt'],
+            key_file=fm_conf['stomp_ssl_key'],
+            ca_certs='/etc/pki/tls/certs/ca-bundle.crt',
+        )
         self.log.debug('Connecting to %s...', uris)
         conn.connect(wait=True)
-
-        if self.using_legacy_stomppy:
-            host_and_port = conn.get_host_and_port()
-        else:
-            host_and_port = '{}:{}'.format(*conn.transport.current_host_and_port)
-
-        self.log.debug('Connected to %s', host_and_port)
+        self.log.debug('Connected to %s:%s', *conn.transport.current_host_and_port)
         return conn
 
     def _try_to_get_stomp_connection(self):
@@ -125,22 +95,7 @@ class StompPublisher(object):
         conn = self._try_to_get_stomp_connection()
         dest = '.'.join([load_config().dest_prefix, topic])
         msg = json.dumps(msg)
-
-        if self.using_legacy_stomppy:
-            headers = {
-                'content-length': len(msg),
-                'content-type': 'text/json',
-                'destination': dest,
-                'receipt': str(uuid.uuid4())
-            }
-            self.log.debug('Sending message to %s, headers: %s', dest, headers)
-            conn.send(message=msg, headers=headers)
-        else:
-            # In stomp.py v4+, content-length is automatically determined. Also,
-            # waiting on receipt is not supported. See:
-            # https://github.com/jasonrbriggs/stomp.py/issues/224
-            self.log.debug('Sending message to %s', dest)
-            conn.send(dest, msg, content_type='text/json')
-
+        self.log.debug('Sending message to %s', dest)
+        conn.send(dest, msg, content_type='text/json')
         self.log.debug('Message successfully sent')
         conn.disconnect()
